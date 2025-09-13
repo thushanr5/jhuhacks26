@@ -1,4 +1,62 @@
-# React + TypeScript + Vite
+# Fitness App
+
+A modern fitness tracking application built with React and TypeScript. Track your workouts, monitor your progress, and achieve your fitness goals.
+
+## Features
+
+- Clean and intuitive dashboard
+- Workout management system
+- Custom workout creation
+- Progress tracking
+- Responsive design for all devices
+
+## Tech Stack
+
+- React
+- TypeScript
+- Styled Components
+- Vite
+- Chart.js
+
+## Getting Started
+
+1. Clone the repository:
+```bash
+git clone [repository-url]
+cd fitness-app
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Run the development server:
+```bash
+npm run dev
+```
+
+The application will be available at `http://localhost:5173`
+
+## Project Structure
+
+- `/src` - Source code
+  - `/components` - Reusable UI components
+  - `/pages` - Main application pages
+  - `/assets` - Static assets
+  - `/styles` - Global styles and themes
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a pull request
+
+## License
+
+MIT License+ TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
