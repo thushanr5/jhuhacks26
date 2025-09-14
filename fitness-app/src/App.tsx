@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Dashboard from './pages/Dashboard';
 import Workouts from './pages/Workouts';
+import Nutrition from './pages/Nutrition';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -19,6 +20,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/workouts" element={<Workouts />} />
+          <Route path="/nutrition" element={<Nutrition />} />
           {/* Add more routes as needed */}
         </Routes>
       </AppContainer>

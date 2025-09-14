@@ -1,17 +1,23 @@
 import { useState } from 'react';
 import styled from 'styled-components';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const DashboardContainer = styled.div`
   margin-left: 240px;
   padding: 80px 2rem 2rem;
 `;
 
-const Grid = styled.div`
+const TwoColumnLayout = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  /* left sidebar narrower, right chart column wider */
+  grid-template-columns: 280px 2fr;
   gap: 1.5rem;
+  align-items: start;
   margin-bottom: 2rem;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const Card = styled.div`
@@ -87,13 +93,24 @@ const initialWeightData = [
 ];
 
 const Dashboard = () => {
-  const [weightData, setWeightData] = useState(initialWeightData);
-  const [stats, setStats] = useState({
+  // load persisted weight and history if available
+  const persistedWeight = typeof window !== 'undefined' ? localStorage.getItem('ft_weight') : null;
+  const persistedHistory = typeof window !== 'undefined' ? localStorage.getItem('ft_weight_history') : null;
+
+  const [weightData, setWeightData] = useState<{ date: string; weight: number }[]>(() => {
+    try {
+      return persistedHistory ? JSON.parse(persistedHistory) : initialWeightData;
+    } catch {
+      return initialWeightData;
+    }
+  });
+
+  const [stats, setStats] = useState(() => ({
     workouts: '4',
-    weight: '174',
+    weight: persistedWeight ?? '174',
     calories: '2100',
     activeMinutes: '45'
-  });
+  }));
   
   const [editing, setEditing] = useState<string | null>(null);
   
@@ -109,13 +126,16 @@ const Dashboard = () => {
       const newWeight = parseFloat(value);
       if (!isNaN(newWeight)) {
         const currentDate = new Date();
-        setWeightData(prev => [
-          ...prev.slice(1), // Remove oldest entry
-          {
-            date: `${currentDate.getMonth() + 1}/${currentDate.getDate()}`,
-            weight: newWeight
-          }
-        ]);
+        const newEntry = {
+          date: `${currentDate.getMonth() + 1}/${currentDate.getDate()}`,
+          weight: newWeight
+        };
+        setWeightData(prev => {
+          const next = [...prev.slice(1), newEntry];
+          try { localStorage.setItem('ft_weight_history', JSON.stringify(next)); } catch { /* ignore storage errors */ }
+          return next;
+        });
+  try { localStorage.setItem('ft_weight', String(newWeight)); } catch { /* ignore storage errors */ }
       }
     }
     
@@ -130,120 +150,129 @@ const Dashboard = () => {
 
   return (
     <DashboardContainer>
-      <Grid>
-        <StatsCard>
-          <h3>
-            Workouts This Week
-            <EditButton onClick={() => handleEdit('workouts')}>
-              <span role="img" aria-label="edit">✏️</span>
-            </EditButton>
-          </h3>
-          {editing === 'workouts' ? (
-            <input
-              type="text"
-              value={stats.workouts}
-              onChange={(e) => setStats(prev => ({ ...prev, workouts: e.target.value }))}
-              onBlur={(e) => handleSave('workouts', e.target.value)}
-              onKeyPress={(e) => handleKeyPress(e, 'workouts', stats.workouts)}
-              autoFocus
-            />
-          ) : (
-            <div className="number" onClick={() => handleEdit('workouts')}>
-              {stats.workouts}
+      <TwoColumnLayout>
+        <div>
+          <StatsCard style={{ marginBottom: 16 }}>
+            <h3>
+              Current Weight
+              <EditButton onClick={() => handleEdit('weight')}>
+                <span role="img" aria-label="edit">✏️</span>
+              </EditButton>
+            </h3>
+            {editing === 'weight' ? (
+              <input
+                type="number"
+                value={stats.weight}
+                onChange={(e) => setStats(prev => ({ ...prev, weight: e.target.value }))}
+                onBlur={(e) => handleSave('weight', e.target.value)}
+                onKeyPress={(e) => handleKeyPress(e, 'weight', stats.weight)}
+                autoFocus
+              />
+            ) : (
+              <div className="number" onClick={() => handleEdit('weight')}>
+                {stats.weight} lbs
+              </div>
+            )}
+          </StatsCard>
+
+          <StatsCard style={{ marginBottom: 16 }}>
+            <h3>
+              Workouts This Week
+              <EditButton onClick={() => handleEdit('workouts')}>
+                <span role="img" aria-label="edit">✏️</span>
+              </EditButton>
+            </h3>
+            {editing === 'workouts' ? (
+              <input
+                type="text"
+                value={stats.workouts}
+                onChange={(e) => setStats(prev => ({ ...prev, workouts: e.target.value }))}
+                onBlur={(e) => handleSave('workouts', e.target.value)}
+                onKeyPress={(e) => handleKeyPress(e, 'workouts', stats.workouts)}
+                autoFocus
+              />
+            ) : (
+              <div className="number" onClick={() => handleEdit('workouts')}>
+                {stats.workouts}
+              </div>
+            )}
+          </StatsCard>
+
+          <StatsCard style={{ marginBottom: 16 }}>
+            <h3>
+              Calories Today
+              <EditButton onClick={() => handleEdit('calories')}>
+                <span role="img" aria-label="edit">✏️</span>
+              </EditButton>
+            </h3>
+            {editing === 'calories' ? (
+              <input
+                type="text"
+                value={stats.calories}
+                onChange={(e) => setStats(prev => ({ ...prev, calories: e.target.value }))}
+                onBlur={(e) => handleSave('calories', e.target.value)}
+                onKeyPress={(e) => handleKeyPress(e, 'calories', stats.calories)}
+                autoFocus
+              />
+            ) : (
+              <div className="number" onClick={() => handleEdit('calories')}>
+                {stats.calories}
+              </div>
+            )}
+          </StatsCard>
+
+          <StatsCard>
+            <h3>
+              Active Minutes
+              <EditButton onClick={() => handleEdit('activeMinutes')}>
+                <span role="img" aria-label="edit">✏️</span>
+              </EditButton>
+            </h3>
+            {editing === 'activeMinutes' ? (
+              <input
+                type="text"
+                value={stats.activeMinutes}
+                onChange={(e) => setStats(prev => ({ ...prev, activeMinutes: e.target.value }))}
+                onBlur={(e) => handleSave('activeMinutes', e.target.value)}
+                onKeyPress={(e) => handleKeyPress(e, 'activeMinutes', stats.activeMinutes)}
+                autoFocus
+              />
+            ) : (
+              <div className="number" onClick={() => handleEdit('activeMinutes')}>
+                {stats.activeMinutes}
+              </div>
+            )}
+          </StatsCard>
+        </div>
+
+        <div>
+          <ChartCard>
+            <h3>Weight Progress</h3>
+            <div style={{ width: '100%', height: 360 }}>
+              <ResponsiveContainer>
+                <LineChart data={weightData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis domain={['auto', 'auto']} />
+                  <Tooltip />
+                  <Legend />
+                  <Line 
+                    type="monotone" 
+                    dataKey="weight" 
+                    stroke="#4299e1" 
+                    strokeWidth={2}
+                    dot={{ fill: '#4299e1', strokeWidth: 2 }}
+                    activeDot={{ r: 8 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
-          )}
-        </StatsCard>
-        
-        <StatsCard>
-          <h3>
-            Current Weight
-            <EditButton onClick={() => handleEdit('weight')}>
-              <span role="img" aria-label="edit">✏️</span>
-            </EditButton>
-          </h3>
-          {editing === 'weight' ? (
-            <input
-              type="text"
-              value={stats.weight}
-              onChange={(e) => setStats(prev => ({ ...prev, weight: e.target.value }))}
-              onBlur={(e) => handleSave('weight', e.target.value)}
-              onKeyPress={(e) => handleKeyPress(e, 'weight', stats.weight)}
-              autoFocus
-            />
-          ) : (
-            <div className="number" onClick={() => handleEdit('weight')}>
-              {stats.weight} lbs
+            <div style={{ textAlign: 'center', marginTop: '1rem', color: '#718096', fontSize: '0.9rem' }}>
+              Click the weight value above to update the graph
             </div>
-          )}
-        </StatsCard>
-        
-        <StatsCard>
-          <h3>
-            Calories Today
-            <EditButton onClick={() => handleEdit('calories')}>
-              <span role="img" aria-label="edit">✏️</span>
-            </EditButton>
-          </h3>
-          {editing === 'calories' ? (
-            <input
-              type="text"
-              value={stats.calories}
-              onChange={(e) => setStats(prev => ({ ...prev, calories: e.target.value }))}
-              onBlur={(e) => handleSave('calories', e.target.value)}
-              onKeyPress={(e) => handleKeyPress(e, 'calories', stats.calories)}
-              autoFocus
-            />
-          ) : (
-            <div className="number" onClick={() => handleEdit('calories')}>
-              {stats.calories}
-            </div>
-          )}
-        </StatsCard>
-        
-        <StatsCard>
-          <h3>
-            Active Minutes
-            <EditButton onClick={() => handleEdit('activeMinutes')}>
-              <span role="img" aria-label="edit">✏️</span>
-            </EditButton>
-          </h3>
-          {editing === 'activeMinutes' ? (
-            <input
-              type="text"
-              value={stats.activeMinutes}
-              onChange={(e) => setStats(prev => ({ ...prev, activeMinutes: e.target.value }))}
-              onBlur={(e) => handleSave('activeMinutes', e.target.value)}
-              onKeyPress={(e) => handleKeyPress(e, 'activeMinutes', stats.activeMinutes)}
-              autoFocus
-            />
-          ) : (
-            <div className="number" onClick={() => handleEdit('activeMinutes')}>
-              {stats.activeMinutes}
-            </div>
-          )}
-        </StatsCard>
-        <ChartCard>
-          <h3>Weight Progress</h3>
-          <LineChart width={800} height={300} data={weightData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="date" />
-            <YAxis domain={['auto', 'auto']} />
-            <Tooltip />
-            <Legend />
-            <Line 
-              type="monotone" 
-              dataKey="weight" 
-              stroke="#4299e1" 
-              strokeWidth={2}
-              dot={{ fill: '#4299e1', strokeWidth: 2 }}
-              activeDot={{ r: 8 }}
-            />
-          </LineChart>
-          <div style={{ textAlign: 'center', marginTop: '1rem', color: '#718096', fontSize: '0.9rem' }}>
-            Click the weight value above to update the graph
-          </div>
-        </ChartCard>
-      </Grid>
+          </ChartCard>
+        </div>
+      </TwoColumnLayout>
     </DashboardContainer>
   );
 };

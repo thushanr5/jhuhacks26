@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { FaDumbbell, FaPlus, FaFire, FaClock, FaPlay } from 'react-icons/fa';
 
@@ -97,7 +98,6 @@ const WorkoutMetrics = styled.div`
     color: #4299e1;
   }
 `;
-
 const MetricItem = styled.div`
   display: flex;
   align-items: center;
@@ -179,7 +179,7 @@ const AddWorkoutCard = styled(WorkoutCard)`
   }
 `;
 
-const workouts = [
+const initialWorkouts = [
   {
     id: 1,
     title: 'Upper Body Strength',
@@ -219,6 +219,12 @@ const workouts = [
 ];
 
 const Workouts = () => {
+    const [workouts, setWorkouts] = useState(initialWorkouts);
+
+    const handleInputChange = (id: number, field: string, value: string | number) => {
+        setWorkouts(workouts.map(w => w.id === id ? { ...w, [field]: value } : w));
+    };
+
   return (
     <WorkoutsContainer>
       <PageHeader>
@@ -230,22 +236,67 @@ const Workouts = () => {
           <WorkoutCard key={workout.id}>
             <CardHeader>
               <FaDumbbell />
-              <CardTitle>{workout.title}</CardTitle>
+              <input 
+                type="text" 
+                value={workout.title} 
+                onChange={(e) => handleInputChange(workout.id, 'title', e.target.value)}
+                style={{ fontSize: '1.2rem', fontWeight: 600, border: 'none', width: '100%' }}
+              />
             </CardHeader>
             <CardInfo>
               <WorkoutMetrics>
                 <MetricItem>
                   <FaClock />
-                  <span>{workout.duration} min</span>
+                  <input 
+                    type="number" 
+                    value={workout.duration} 
+                    onChange={(e) => handleInputChange(workout.id, 'duration', parseInt(e.target.value))}
+                    style={{ width: '50px', border: 'none' }}
+                  />
+                  <span>min</span>
                 </MetricItem>
                 <MetricItem>
                   <FaFire />
-                  <span>{workout.calories} cal</span>
+                  <input 
+                    type="number" 
+                    value={workout.calories} 
+                    onChange={(e) => handleInputChange(workout.id, 'calories', parseInt(e.target.value))}
+                    style={{ width: '60px', border: 'none' }}
+                  />
+                   <span>cal</span>
                 </MetricItem>
               </WorkoutMetrics>
-              <div>{workout.exercises} exercises</div>
-              <div>Difficulty: {workout.difficulty}</div>
-              <CategoryTag>{workout.category}</CategoryTag>
+              <div>
+                <input 
+                    type="number" 
+                    value={workout.exercises} 
+                    onChange={(e) => handleInputChange(workout.id, 'exercises', parseInt(e.target.value))}
+                    style={{ width: '40px', border: 'none' }}
+                />
+                 exercises
+              </div>
+              <div>Difficulty: 
+                <select 
+                    value={workout.difficulty} 
+                    onChange={(e) => handleInputChange(workout.id, 'difficulty', e.target.value)}
+                    style={{ border: 'none' }}
+                >
+                    <option value="Beginner">Beginner</option>
+                    <option value="Intermediate">Intermediate</option>
+                    <option value="Advanced">Advanced</option>
+                </select>
+              </div>
+              <CategoryTag>
+                <select 
+                    value={workout.category} 
+                    onChange={(e) => handleInputChange(workout.id, 'category', e.target.value)}
+                    style={{ border: 'none', background: 'transparent', color: '#2b6cb0', fontWeight: 500 }}
+                >
+                    <option value="Strength">Strength</option>
+                    <option value="Cardio">Cardio</option>
+                    <option value="Flexibility">Flexibility</option>
+                </select>
+              </CategoryTag>
               <StartButton>
                 <FaPlay />
                 Start Workout
